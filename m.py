@@ -1,3 +1,4 @@
+
 def compries():
     n=str(input('enter the word:'))
     c=''
@@ -5,13 +6,11 @@ def compries():
         a=1
         while n[i]==n[i+1]:
             a+=1
-        b=n[i]+str(a)
+        b=n[i]+(a)
        
         if n[i]!=n[i+1]:
-   
-        
-        c+=k
-    c+=b
+            c+=k
+            c+=b
     print(c)
 	   
 	
