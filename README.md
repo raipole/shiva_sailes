@@ -1,1 +1,1 @@
-Biocon sails trainging Excercises and assighnments
+Biocon sails trainging python code Excercises and assighnments
