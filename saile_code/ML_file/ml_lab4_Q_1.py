@@ -139,34 +139,46 @@ def feature_scaling(data):
         diff=cost_first[0]-cost_j
         ss_tot = sum([i - np.mean(target_train) for i in target_train])
         r_score = 1 - (cost_fun / ss_tot)
+        if diff >=100:
+            print(cost_j)
+            print('new titha:', titha)
+            print('cost function', cost_job)
+            print('new r_score:', r_score)
+
+            break
+        y_pred_value=[]
+
+        for k in range(len(features_test[0])):
+            y_pred = sum([titha[i] * features_test[i][k] for i in range(len(titha))])
+            y_pred_value.append(y_pred)
+
+        print('x',y_pred_value)
+        cost_f = sum([(i - j) ** 2 for i, j in zip(y_pred_value, target_test)])
+        print(cost_fun)
+        cost_job = (1 / 2) * (cost_f)
+        print(cost_job)
+        ss_tot=sum([i-np.mean(target_test) for i in target_train])
+        r_score=1-(cost_job/ss_tot)
+        print(r_score)
+        plt.plot(target_test, label='Actual', marker='o')
+
+        # Plot predicted values
+        plt.plot(y_pred_value, label='Predicted', marker='x')
+
+        plt.xlabel('Sample')
+        plt.ylabel('Value')
+        plt.title('Actual vs Predicted Values')
+        plt.legend()
+        plt.grid(True)
         if r_score == 0.5:
             print(cost_j)
             print('new titha:', titha)
             print('cost function', cost_job)
             print('new r_score:', r_score)
+
+
+
             break
-        # y_pred_value=[]
-        #
-        # for k in range(len(features_test[0])):
-        #     y_pred = sum([titha[i] * features_test[i][k] for i in range(len(titha))])
-        #     y_pred_value.append(y_pred)
-        #
-        # print('x',y_pred_value)
-        # cost_f = sum([(i - j) ** 2 for i, j in zip(y_pred_value, target_test)])
-        # print(cost_fun)
-        # cost_job = (1 / 2) * (cost_f)
-        # print(cost_job)
-        # ss_tot=sum([i-np.mean(target_test) for i in target_train])
-        # r_score=1-(cost_job/ss_tot)
-        # print(r_score)
-        # if r_score == 0.5:
-        #     print(cost_j)
-        #     print('new titha:', titha)
-        #     print('cost function', cost_job)
-        #     print('new r_score:', r_score)
-        #     plt.scatter(y_pred_value, target_test, color='black', label='Actual Data')
-        #
-        #     break
 
 
 feature_scaling(data)
