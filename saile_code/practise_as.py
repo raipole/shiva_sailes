@@ -239,20 +239,71 @@
 string='''Sets: Finding Unique Mutations: You have sequenced the genomes of two different viral strains.
  You need to identify which mutations are unique to the new strain and which are shared between both'''
 
-m=''
-lis=[]
-for i in string:
-    if i!=' ':
-        m+=i
-    if i==' ':
-        lis.append(m)
-        m=''
+# m=''
+# lis=[]
+# for i in string:
+#     if i!=' ':
+#         m+=i
+#     if i==' ':
+#         lis.append(m)
+#         m=''
+#
+#
+#     dict={keys:lis.count(keys) for keys in lis }
+#
+#     for key in dict.keys():
+#         if dict[key]>1:
+#             v=string.replace(key,'')
+#
+# print(v)
+#
+# def binary():
+#     b=1100110
+#     a=str(b)[::-1]
+#     print(a)
+#     number=sum([(2**i)*1 if a[i]=='1' else (2**i)*0 for i in range(len(a))])
+#     print(number)
+# binary()
 
+# a='shiva'
+# b='nanda'
+# c=a+b
+# d=['a','b','c']
+# m=[1,2,3]
+# v=''.join(m)
+# print(v)
 
-    dict={keys:lis.count(keys) for keys in lis }
+# def compress():
+#     count=1
+#     word=''
+#     a=str(input('enter the word:'))
+#     for i in range(len(a)-1):
+#         if a[i]==a[i+1]:
+#             count+=1
+#         if a[i]!=a[i+1]:
+#             word+=a[i]+str(count)
+#             count=1
+#         if i==(len(a)-2):
+#             word+=a[len(a)-1]+str(count)
+#     print(word)
+#
+# compress()
+# def motif():
+#     S = "ATCGATCGAATCG"
+#     mo='ATC'
+#     for i in range(len(S)-2):
+#         if S[i:i+3]==mo:
+#             print(i)
 
-    for key in dict.keys():
-        if dict[key]>1:
-            v=string.replace(key,'')
+# motif()
 
-print(v)
+# num=[2,6,3,4,9,6,32,4,7,8,5,3,8,3,4]
+#
+# set={i for i in num if num.count(i)>1}
+# print(*set)
+
+import scipy.stats as stats
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score
+from sklearn.model_selection import KFold,cross_val_score
+from sklearn.datasets import load_boston
