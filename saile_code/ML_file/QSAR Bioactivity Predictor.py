@@ -32,6 +32,8 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import cross_validate
 from sklearn.model_selection import KFold, cross_validate
 from sklearn.feature_selection import VarianceThreshold
+from rdkit.Chem import Descriptors
+from sklearn.preprocessing import StandardScaler
 
 # i am loading data
 
@@ -144,13 +146,14 @@ def smile_to_morganprint(smiles,radius=2,n_Bits=1024):
 
 
 
-
 # i am getting training features
 
 X_train=smile_to_morganprint(X_train['Smiles'],radius=2,n_Bits=1024)
 X_test=smile_to_morganprint(X_test['Smiles'],radius=2,n_Bits=1024)
 x_features=smile_to_morganprint(data_clean['Smiles'],radius=2,n_Bits=1024)
+# x_features = pd.concat([x_features, descriptor_scaled], axis=1)
 
+print(X.shape)
 
 print('x',X_train.shape)
 print('y',X_test.shape)
@@ -198,7 +201,7 @@ for name,model in models.items():
     print(f'mean of mse_score of {name}:',(-cv_score['test_mse']).mean())
     print(f'std of mse_score of {name}:',(-cv_score['test_mse']).std())
     result.append({
-        "Model": name,"R2 Score":   r2_mean,"RMSE":mean_rmse_mean,'std_r2':})
+        "Model": name,"R2 Score":   r2_mean,"RMSE":mean_rmse_mean,'std_r2': r2_std})
 
     results_df = pd.DataFrame(result)
 
