@@ -1,4 +1,4 @@
-from tkinter.constants import FIRST
+
 
 import pandas as pd
 import numpy as np
@@ -8,7 +8,7 @@ from fontTools.merge.util import first
 from pandas.core.interchange import column
 from sklearn import linear_model
 # from sklearn.externals.array_api_compat.cupy.linalg import pinv
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LogisticRegression
 from sklearn.datasets import fetch_california_housing
 from sklearn.model_selection import train_test_split, KFold
 from sklearn.metrics import r2_score
@@ -21,10 +21,10 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem import Draw
 from rdkit.Chem import rdFingerprintGenerator
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import Lasso
-from sklearn.linear_model import Ridge
-from xgboost import XGBRegressor
+from sklearn.linear_model import RidgeClassifier
+from xgboost import XGBClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import BaggingRegressor
 from sklearn.metrics import r2_score
@@ -34,11 +34,29 @@ from sklearn.model_selection import KFold, cross_validate
 from sklearn.feature_selection import VarianceThreshold
 from rdkit.Chem import Descriptors
 from sklearn.preprocessing import StandardScaler
-from matplotlib.pyplot import plot
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import BaggingClassifier
+from lightgbm import LGBMClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import precision_score
+from sklearn.metrics import f1_score
+from sklearn.metrics import classification_report
+from sklearn.metrics import roc_auc_score
+from sklearn.metrics import log_loss
+from sklearn.metrics import recall_score
 from sklearn.model_selection import RandomizedSearchCV
-from sklearn.ensemble import RandomForestRegressor
-import matplotlib.pyplot as plt
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import StratifiedKFold, cross_validate
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+
 
 ########################## i am loading the data ############################
 
@@ -47,6 +65,8 @@ data=pd.read_csv('/home/sails/shiva_sailes/saile_code/ML_file/ml-driven-qsar-mod
 
 
 #################################### Explanatory data analysis ########################################
+
+
 print(data.head())
 
 print(data.describe())
@@ -63,11 +83,9 @@ duplicates = data[data.duplicated(subset='Smiles', keep=False)]
 print('Duplicate:',duplicates)
 
 print('sum of duplicate:',data.duplicated().sum())
-
 duplicate_smiles = data[data.duplicated(subset=["Smiles"], keep=False)]
 
-print('No of Duplicates:',duplicate_smiles)
-
+print('d',duplicate_smiles)
 # i am removing id column
 
 data_new=data.drop(['Molecule ChEMBL ID'],axis=1)
@@ -75,44 +93,42 @@ print(data_new.head())
 
 
 
-plt.figure(figsize=(8,5))
-plt.hist(data['pChEMBL Value'], bins=30)
-plt.xlabel("Target Value")
-plt.ylabel("Frequency")
-plt.title("Distribution of Target")
-plt.show()
-
-
-
-
-
-# df = pd.read_csv("train.csv")
 
 duplicates = data[data.duplicated(subset=["Smiles"], keep=False)]
 
 print(duplicates)
 print('sum of duplicate:',data.duplicated().sum())
 
-
 ####################### Data preprocessing #########################
 
 
 # Removing duplicate occurrences
-data_clean = data.drop_duplicates(subset='Smiles', keep=FIRST)
+
+data_clean = data.drop_duplicates(subset='Smiles', keep='first')
 print(data_clean.head())
 print(data_clean.shape)
 print('sum of duplicate:',data_clean.duplicated().sum())
 
 X=data_clean[['Smiles']]
 print('shape',X.shape)
-y=data_clean['pChEMBL Value']
+# y=data_clean['pChEMBL Value']
+
+# converting continues values of target features into binary values to classification
+
+data_clean["Activity"] = np.select([data_clean["pChEMBL Value"] < 5,(data_clean["pChEMBL Value"] >= 5)],[0, 1])
+
+y=data_clean["Activity"]
+print(y)
+print(y.value_counts())
 
 
-#################### splitting data into train and test #######################
-
+# splitting data into train and test
 
 X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=0.3,random_state=7)
 
+
+print(X_train.shape)
+print(y_train.shape)
 
 
 def smile_to_morganprint(smiles,radius=2,n_Bits=1024):
@@ -120,12 +136,8 @@ def smile_to_morganprint(smiles,radius=2,n_Bits=1024):
 
     for  i in smiles:
         try:
-            count=+1
-
-
             # i am going to convert string  smile to chemical object
             if i is not None :
-
 
                 molecule=Chem.MolFromSmiles(str(i))
 
@@ -139,12 +151,9 @@ def smile_to_morganprint(smiles,radius=2,n_Bits=1024):
 
                 # i am going to convert morganfingerprint to array
 
-
                 Chem.DataStructs.ConvertToNumpyArray(morgan_finger,empty_arr)
 
-
                 # now i am taking storing these values in  finger_prints
-
 
                 finger_prints.append(empty_arr)
 
@@ -160,76 +169,62 @@ def smile_to_morganprint(smiles,radius=2,n_Bits=1024):
 
     return np.array(finger_prints)
 
-
-
 # converting smiles strings into morganfinger prints x_train and x_test
+
 
 X_train=smile_to_morganprint(X_train['Smiles'],radius=2,n_Bits=1024)
 X_test=smile_to_morganprint(X_test['Smiles'],radius=2,n_Bits=1024)
 x_features=smile_to_morganprint(data_clean['Smiles'],radius=2,n_Bits=1024)
-# x_features = pd.concat([x_features, descriptor_scaled], axis=1)
 
-print(X.shape)
-
-print('X_train morganfeatures prints:',X_train.shape)
-print('X_test morganfinger prints',X_test.shape)
-
+#
 models = {
-    "LinearRegression": LinearRegression(),
-    "Ridge": Ridge(),
-    "Lasso": Lasso(),
-    "RandomForest": RandomForestRegressor(random_state=42),
-    "GradientBoosting": GradientBoostingRegressor(random_state=42),
-    "Bagging": BaggingRegressor(random_state=42),
-    "XGBoost": XGBRegressor(random_state=42)}
+    "Logistic": LogisticRegression(max_iter=1000,random_state=42),
+    "Ridge": RidgeClassifier(),
 
-tree_based_model=[models["RandomForest"],models["GradientBoosting"],models['XGBoost'],models['GradientBoosting']]
+    "RandomForest":RandomForestClassifier(),
+    "Lightboot": LGBMClassifier(),
+    "Bagging":  BaggingClassifier(),
+    "XGBoost": XGBClassifier()}
+#----------------------------------------------------
+#X = Features
+#y = Target (0/1)
+#----------------------------------------------------
 
-linear_model=[models['LinearRegression'],models['Ridge'],models['Lasso']]
-
-
-################## KFold cross validation for generalization of model and model selection ######################
-
-# initialization of 10-kfold cross validation
-
-kfold=KFold(n_splits=10,shuffle=True)
-
-Kfold_result={}
-
-result=[]
-
-for name,model in models.items():
+cv = StratifiedKFold(n_splits=10,shuffle=True,random_state=42)
 
 
+scoring = {'Accuracy':'accuracy','Precision':'precision','Recall':'recall','F1':'f1','ROC_AUC':'roc_auc'}
 
-    cv_score=cross_validate(model,x_features,y,cv=kfold,scoring={'r2': 'r2','mse': 'neg_mean_squared_error'})
+summary = []
 
-    r2_score=cv_score['test_r2']
-    r2_mean=np.mean(cv_score['test_r2'])
-    r2_std=np.std(cv_score['test_r2'])
-    print(f'r_cores of moedl{name}:',r2_score)
-    print(f'mean of r_score of {name}:',r2_mean)
-    print(f'std of r_score of {name}:',r2_std)
+for name, model in models.items():
 
+    scores = cross_validate(model,x_features,y,cv=cv,scoring=scoring,return_train_score=False)
 
-    neg_score=-cv_score['test_mse']
-    mean_rmse = np.sqrt(neg_score)
-    mean_rmse_mean = mean_rmse.mean()
-    mean_rmse_std = mean_rmse.std()
+    summary.append({
 
-    print(f'mse_cores of moedl{name}:',-cv_score['test_mse'])
-    print(f'mean of mse_score of {name}:',(-cv_score['test_mse']).mean())
-    print(f'std of mse_score of {name}:',(-cv_score['test_mse']).std())
-    result.append({
-        "Model": name,"R2 Score":   r2_mean,"RMSE":mean_rmse_mean,'std_r2': r2_std})
+        'Model':name,
 
-    results_df = pd.DataFrame(result)
+        'Accuracy Mean':scores['test_Accuracy'].mean(),
+        'Accuracy Std':scores['test_Accuracy'].std(),
 
-    results_df = results_df.sort_values(
-        by="R2 Score",
-        ascending=False
-    )
-# ####################### find best parameters on selected model #################
-#
-#
-# def hypertunning_parameter(model=RandomForestRegressor(),x_train=X_train,y_train=y_train,):
+        'Precision Mean':scores['test_Precision'].mean(),
+        'Precision Std':scores['test_Precision'].std(),
+
+        'Recall Mean':scores['test_Recall'].mean(),
+        'Recall Std':scores['test_Recall'].std(),
+
+        'F1 Mean':scores['test_F1'].mean(),
+        'F1 Std':scores['test_F1'].std(),
+
+        'ROC AUC Mean':scores['test_ROC_AUC'].mean(),
+        'ROC AUC Std':scores['test_ROC_AUC'].std()
+
+    })
+
+results = pd.DataFrame(summary)
+
+print(results)
+
+results.to_excel('/home/sails/shiva_sailes/saile_code/ML_file/ml-driven-qsar-modeling-for-large-scale-bioactivity-predictions (2)/QSAR bioactivity classification results/Classification_10Fold_Comparison.xlsx')
+

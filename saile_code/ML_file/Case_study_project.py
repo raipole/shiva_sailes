@@ -102,7 +102,8 @@ print(data_clean.shape)
 print('sum of duplicate:',data_clean.duplicated().sum())
 
 X=data_clean[['Smiles']]
-print('shape',X.shape)
+print('smile shape',X.shape)
+print('Smiles_values:',X.head())
 y=data_clean['pChEMBL Value']
 
 X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=0.2,random_state=7)
@@ -228,30 +229,36 @@ linear_model=[models['LinearRegression'],models['Ridge'],models['Lasso']]
 # def model_selection():
 
 
-#
-# model_result={}
-# model_co={}
-# #
-# for name,mod in models.items():
 
-#         mod.fit(X_train,y_train)
+model_result={}
+model_co={}
 #
-#         y_pred=mod.predict(X_test)
-#
-#         r_score=r2_score(y_test,y_pred)
-#         print(f'r2_score of {name}:',r_score)
-#
-#         mse=mean_squared_error(y_test,y_pred)
-#
-#         RMSE=np.sqrt(mse)
-#         print(f'RMSE score of {name}:',RMSE)
-#         model_result[name]=[r_score,mse,RMSE]
-#
-# # model_result=pd.DataFrame(model_result,index=['r_score','mse','rmse'])
-# # print(model_result)
-# # model_result.to_csv('/home/sails/shiva_sailes/saile_code/ML_file/ml-driven-qsar-modeling-for-large-scale-bioactivity-predictions (2)/model_resul_2048_before_cv and after preprocess_feature_selction.csv')
-#
-# # KFold cross validation
+for name,mod in models.items():
+
+        mod.fit(X_train,y_train)
+
+        y_pred=mod.predict(X_test)
+
+        r_score=r2_score(y_test,y_pred)
+        print(f'r2_score of  {name}:',r_score)
+
+        r_score=r2_score(y_test,y_pred)
+        print(f'r2_score of {name}:',r_score)
+
+        mse=mean_squared_error(y_test,y_pred)
+
+        RMSE=np.sqrt(mse)
+        print(f'RMSE score of   {name}:',RMSE)
+        model_result[name]=[r_score,mse,RMSE]
+
+
+
+
+# model_result=pd.DataFrame(model_result,index=['r_score','mse','rmse'])
+# print(model_result)
+# model_result.to_csv('/home/sails/shiva_sailes/saile_code/ML_file/ml-driven-qsar-modeling-for-large-scale-bioactivity-predictions (2)/model_resul_2048_before_cv and after preprocess_feature_selction.csv')
+
+# KFold cross validation
 #
 # kfold=KFold(n_splits=10,shuffle=True)
 #
@@ -290,71 +297,71 @@ linear_model=[models['LinearRegression'],models['Ridge'],models['Lasso']]
 #     )
 #
 # results_kfold=results_df.to_csv('/home/sails/shiva_sailes/saile_code/ML_file/ml-driven-qsar-modeling-for-large-scale-bioactivity-predictions (2)/model_resul_1024_After_cv_after data-preprocess_feature_selction.csv')
-#
-# # #     # print(f'mse_cores of moedl{i}:',cv_score['mean_squared_error'])
-# # #     #
-# # #     #
-# # #     # print(f'mean of r_score of {i}:',np.mean(cv_score['mean_squared_error']))
-# # #     # print(f'std of r_score of {i}:',np.std(cv_score['mean_squared_error']))
-#
-# # Feature engineering with threshold
-#
-# #For binary Morgan fingerprints :
-#
-# #threshold=0.0 → Remove only constant features (recommended as a starting point)
-# #threshold=0.01 → Remove features with very low variance
-# #threshold=0.05 → More aggressive filtering
-#
-# # feature_selection=VarianceThreshold(threshold=0.075)
-# # X_selected_features =feature_selection.fit_transform(x_features)
-# # X_test_selected = selector.transform(X_test)
-#
-# # print("Original features :", X_train.shape[1])
-# # print("Selected features :", X_selected_features.shape)
-# #
-# #
-# # kfold=KFold(n_splits=10,shuffle=True)
-# # #
-# # Kfold_result_slt={}
-# # result=[]
-# # for name,model in models.items():
-# #
-# #
-# #
-# #     cv_score=cross_validate(model,X_selected_features,y,cv=kfold,scoring={'r2': 'r2','mse': 'neg_mean_squared_error'})
-# #
-# #     r2_score=cv_score['test_r2']
-# #     r2_mean=np.mean(cv_score['test_r2'])
-# #     r2_std=np.std(cv_score['test_r2'])
-# #     print(f'r_cores of moedl{name}:',r2_score)
-# #     print(f'mean of r_score of {name}:',r2_mean)
-# #     print(f'std of r_score of {name}:',r2_std)
-# #
-# #
-# #     neg_score=-cv_score['test_mse']
-# #     mean_rmse = np.sqrt(neg_score)
-# #     mean_rmse_mean = mean_rmse.mean()
-# #     mean_rmse_std = mean_rmse.std()
-# #
-# #     print(f'mse_cores of moedl{name}:',-cv_score['test_mse'])
-# #     print(f'mean of mse_score of {name}:',(-cv_score['test_mse']).mean())
-# #     print(f'std of mse_score of {name}:',(-cv_score['test_mse']).std())
-# #     result.append({
-# #     "Model": name,"R2 Score":   r2_mean,"RMSE":mean_rmse_mean})
-# #
-# #     results_df = pd.DataFrame(result)
-# #
-# #     results_df = results_df.sort_values(
-# #     by="R2 Score",
-# #     ascending=False
-# #     )
-# #
-# # results_kfold=results_df.to_csv('/home/sails/shiva_sailes/saile_code/ML_file/ml-driven-qsar-modeling-for-large-scale-bioactivity-predictions (2)/model_resul_1024_After_cv_afterfeature_selction_threshold_0.075.csv')
-#
+
 # #     # print(f'mse_cores of moedl{i}:',cv_score['mean_squared_error'])
 # #     #
 # #     #
 # #     # print(f'mean of r_score of {i}:',np.mean(cv_score['mean_squared_error']))
 # #     # print(f'std of r_score of {i}:',np.std(cv_score['mean_squared_error']))
+
+# Feature engineering with threshold
+
+#For binary Morgan fingerprints :
+
+#threshold=0.0 → Remove only constant features (recommended as a starting point)
+#threshold=0.01 → Remove features with very low variance
+#threshold=0.05 → More aggressive filtering
+
+# feature_selection=VarianceThreshold(threshold=0.075)
+# X_selected_features =feature_selection.fit_transform(x_features)
+# X_test_selected = selector.transform(X_test)
+
+# print("Original features :", X_train.shape[1])
+# print("Selected features :", X_selected_features.shape)
 #
 #
+# kfold=KFold(n_splits=10,shuffle=True)
+# #
+# Kfold_result_slt={}
+# result=[]
+# for name,model in models.items():
+#
+#
+#
+#     cv_score=cross_validate(model,X_selected_features,y,cv=kfold,scoring={'r2': 'r2','mse': 'neg_mean_squared_error'})
+#
+#     r2_score=cv_score['test_r2']
+#     r2_mean=np.mean(cv_score['test_r2'])
+#     r2_std=np.std(cv_score['test_r2'])
+#     print(f'r_cores of moedl{name}:',r2_score)
+#     print(f'mean of r_score of {name}:',r2_mean)
+#     print(f'std of r_score of {name}:',r2_std)
+#
+#
+#     neg_score=-cv_score['test_mse']
+#     mean_rmse = np.sqrt(neg_score)
+#     mean_rmse_mean = mean_rmse.mean()
+#     mean_rmse_std = mean_rmse.std()
+#
+#     print(f'mse_cores of moedl{name}:',-cv_score['test_mse'])
+#     print(f'mean of mse_score of {name}:',(-cv_score['test_mse']).mean())
+#     print(f'std of mse_score of {name}:',(-cv_score['test_mse']).std())
+#     result.append({
+#     "Model": name,"R2 Score":   r2_mean,"RMSE":mean_rmse_mean})
+#
+#     results_df = pd.DataFrame(result)
+#
+#     results_df = results_df.sort_values(
+#     by="R2 Score",
+#     ascending=False
+#     )
+#
+# results_kfold=results_df.to_csv('/home/sails/shiva_sailes/saile_code/ML_file/ml-driven-qsar-modeling-for-large-scale-bioactivity-predictions (2)/model_resul_1024_After_cv_afterfeature_selction_threshold_0.075.csv')
+
+#     # print(f'mse_cores of moedl{i}:',cv_score['mean_squared_error'])
+#     #
+#     #
+#     # print(f'mean of r_score of {i}:',np.mean(cv_score['mean_squared_error']))
+#     # print(f'std of r_score of {i}:',np.std(cv_score['mean_squared_error']))
+
+
