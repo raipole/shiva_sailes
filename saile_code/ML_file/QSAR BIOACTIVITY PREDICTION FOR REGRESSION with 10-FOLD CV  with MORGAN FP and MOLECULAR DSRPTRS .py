@@ -34,19 +34,12 @@ from sklearn.model_selection import KFold, cross_validate
 from sklearn.feature_selection import VarianceThreshold
 from rdkit.Chem import Descriptors
 from sklearn.preprocessing import StandardScaler
-from matplotlib.pyplot import plot
-from sklearn.model_selection import RandomizedSearchCV
-from sklearn.ensemble import RandomForestRegressor
-import matplotlib.pyplot as plt
-from sklearn.model_selection import GridSearchCV
 
-########################## i am loading the data ############################
+# i am loading data
 
 
 data=pd.read_csv('/home/sails/shiva_sailes/saile_code/ML_file/ml-driven-qsar-modeling-for-large-scale-bioactivity-predictions (2)/train.csv')
 
-
-#################################### Explanatory data analysis ########################################
 print(data.head())
 
 print(data.describe())
@@ -63,11 +56,9 @@ duplicates = data[data.duplicated(subset='Smiles', keep=False)]
 print('Duplicate:',duplicates)
 
 print('sum of duplicate:',data.duplicated().sum())
-
 duplicate_smiles = data[data.duplicated(subset=["Smiles"], keep=False)]
 
-print('No of Duplicates:',duplicate_smiles)
-
+print('d',duplicate_smiles)
 # i am removing id column
 
 data_new=data.drop(['Molecule ChEMBL ID'],axis=1)
@@ -75,17 +66,7 @@ print(data_new.head())
 
 
 
-plt.figure(figsize=(8,5))
-plt.hist(data['pChEMBL Value'], bins=30)
-plt.xlabel("Target Value")
-plt.ylabel("Frequency")
-plt.title("Distribution of Target")
-plt.show()
-
-
-
-
-
+#
 # df = pd.read_csv("train.csv")
 
 duplicates = data[data.duplicated(subset=["Smiles"], keep=False)]
@@ -93,28 +74,21 @@ duplicates = data[data.duplicated(subset=["Smiles"], keep=False)]
 print(duplicates)
 print('sum of duplicate:',data.duplicated().sum())
 
-
-####################### Data preprocessing #########################
-
-
 # Removing duplicate occurrences
+
 data_clean = data.drop_duplicates(subset='Smiles', keep=FIRST)
+data_more_than_5 = data_clean[data_clean["pChEMBL Value"] > 5]
 print(data_clean.head())
 print(data_clean.shape)
 print('sum of duplicate:',data_clean.duplicated().sum())
 
-X=data_clean[['Smiles']]
-print('shape',X.shape)
-y=data_clean['pChEMBL Value']
 
 
-#################### splitting data into train and test #######################
+y=data_clean[['pChEMBL Value']]
+print(y)
 
-
-X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=0.3,random_state=7)
-
-
-
+#
+#
 def smile_to_morganprint(smiles,radius=2,n_Bits=1024):
     finger_prints=[]
 
@@ -129,6 +103,12 @@ def smile_to_morganprint(smiles,radius=2,n_Bits=1024):
 
                 molecule=Chem.MolFromSmiles(str(i))
 
+                # i am going to save each chemical object to structure show in a file named called molicule.png
+                # file_name=f'structi_{count}.png'
+                # Draw.MolToFile(molecule,'/home/sails/shiva_sailes/saile_code/ML_file/ml-driven-qsar-modeling-for-large-scale-bioactivity-predictions (2)file_name',size=(300,300))
+
+
+                # print(f"Saved: {file_name}")
                 # i am going to convert each molecule morganfingerprints
 
                 morgan_finger=AllChem.GetMorganFingerprintAsBitVect(molecule,radius,n_Bits)
@@ -160,19 +140,89 @@ def smile_to_morganprint(smiles,radius=2,n_Bits=1024):
 
     return np.array(finger_prints)
 
+# Morgan fingerprints
+x_morgan = smile_to_morganprint(
+    data_clean["Smiles"],
+    radius=2,
+    n_Bits=1024
+)
+
+x_morgan = pd.DataFrame(
+    x_morgan,
+    columns=[f"FP_{i}" for i in range(1024)],
+    index=data_clean.index
+)
 
 
-# converting smiles strings into morganfinger prints x_train and x_test
+# Molecular descriptors
+descriptor_data = []
 
-X_train=smile_to_morganprint(X_train['Smiles'],radius=2,n_Bits=1024)
-X_test=smile_to_morganprint(X_test['Smiles'],radius=2,n_Bits=1024)
-x_features=smile_to_morganprint(data_clean['Smiles'],radius=2,n_Bits=1024)
-# x_features = pd.concat([x_features, descriptor_scaled], axis=1)
+for smi in data_clean["Smiles"]:
 
+    mol = Chem.MolFromSmiles(smi)
+
+    values = [
+        func(mol) if mol else np.nan
+        for name, func in Descriptors._descList
+    ]
+
+    descriptor_data.append(values)
+
+
+descriptor_names = [
+    name for name, func in Descriptors._descList
+]
+
+descriptor_df = pd.DataFrame(
+    descriptor_data,
+    columns=descriptor_names,
+    index=data_clean.index
+)
+
+
+# Remove invalid columns
+descriptor_df = descriptor_df.replace(
+    [np.inf, -np.inf],
+    np.nan
+).dropna(axis=1)
+
+
+# Remove low variance
+selector = VarianceThreshold(0.05)
+
+descriptor_df = pd.DataFrame(
+    selector.fit_transform(descriptor_df),
+    columns=descriptor_df.columns[selector.get_support()],
+    index=data_clean.index
+)
+
+
+# Scale descriptors
+scaler = StandardScaler()
+
+descriptor_scaled = pd.DataFrame(
+    scaler.fit_transform(descriptor_df),
+    columns=descriptor_df.columns,
+    index=data_clean.index
+)
+
+
+# Combine Morgan + descriptors
+X = pd.concat(
+    [x_morgan, descriptor_scaled],
+    axis=1
+)
+
+
+print("Morgan:", x_morgan.shape)
+print("Descriptors:", descriptor_scaled.shape)
+print("Final X:", X.shape)
 print(X.shape)
 
-print('X_train morganfeatures prints:',X_train.shape)
-print('X_test morganfinger prints',X_test.shape)
+
+
+# print('x',X_train.shape)
+# print('y',X_test.shape)
 
 models = {
     "LinearRegression": LinearRegression(),
@@ -188,21 +238,17 @@ tree_based_model=[models["RandomForest"],models["GradientBoosting"],models['XGBo
 linear_model=[models['LinearRegression'],models['Ridge'],models['Lasso']]
 
 
-################## KFold cross validation for generalization of model and model selection ######################
-
-# initialization of 10-kfold cross validation
+#KFold cross validation
 
 kfold=KFold(n_splits=10,shuffle=True)
 
 Kfold_result={}
-
 result=[]
-
 for name,model in models.items():
 
 
 
-    cv_score=cross_validate(model,x_features,y,cv=kfold,scoring={'r2': 'r2','mse': 'neg_mean_squared_error'})
+    cv_score=cross_validate(model,X ,y,cv=kfold,scoring={'r2': 'r2','mse': 'neg_mean_squared_error'})
 
     r2_score=cv_score['test_r2']
     r2_mean=np.mean(cv_score['test_r2'])
@@ -225,11 +271,77 @@ for name,model in models.items():
 
     results_df = pd.DataFrame(result)
 
-    results_df = results_df.sort_values(
-        by="R2 Score",
-        ascending=False
-    )
-# ####################### find best parameters on selected model #################
+    results_df = results_df.sort_values(by="R2 Score",ascending=False)
+# #
+# # results_kfold=results_df.to_csv('/home/sails/shiva_sailes/saile_code/ML_file/ml-driven-qsar-modeling-for-large-scale-bioactivity-predictions (2)/model_resul_1024_After_cv_after data-preprocess_feature_selction.csv')
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.ensemble import RandomForestRegressor
+
+param_grid = {
+    'n_estimators': [100,300, 500, 700, 1000],
+    'max_depth': [10, 15, 20, 30, None],
+    'min_samples_split': [2, 5, 10, 15],
+    'min_samples_leaf': [1, 2, 4, 6, 8],
+    'max_features': ['sqrt', 'log2', 0.3, 0.5],
+    'bootstrap': [True]
+}
+
+rf = RandomForestRegressor(random_state=42)
+
+search = RandomizedSearchCV(
+    rf,
+    param_distributions=param_grid,
+    n_iter=50,
+    cv=10,
+    scoring='r2',
+    n_jobs=-1,
+    random_state=42
+)
+
+search.fit(x_train_mor, y_train)
+
+print(search.best_params_)
+print(search.best_score_)
+
+#### this belowe code for  single run code
+
+#X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=0.3,random_state=7)
+# results = []
 #
+# for name, model in models.items():
 #
-# def hypertunning_parameter(model=RandomForestRegressor(),x_train=X_train,y_train=y_train,):
+#     # Train the model
+#     model.fit(x_train_mor, y_train)
+#
+#     # Predictions
+#     y_train_pred = model.predict(x_train_mor)
+#     y_test_pred = model.predict(x_test_mor)
+#
+#     # Metrics
+#     train_r2 = r2_score(y_train, y_train_pred)
+#     test_r2 = r2_score(y_test, y_test_pred)
+#
+#     # train_rmse = np.sqrt(mean_squared_error(y_train, y_train_pred))
+#     # test_rmse = np.sqrt(mean_squared_error(y_test, y_test_pred))
+#     #
+#     # train_mae = mean_absolute_error(y_train, y_train_pred)
+#     # test_mae = mean_absolute_error(y_test, y_test_pred)
+#
+#     # Store results
+#     results.append({
+#         "Model": name,
+#         "Train R²": train_r2,
+#         "Test R²": test_r2,
+#         # "Train RMSE": train_rmse,
+#         # "Test RMSE": test_rmse,
+#         # "Train MAE": train_mae,
+#         # "Test MAE": test_mae
+#     })
+#
+# # Create DataFrame
+# results_df = pd.DataFrame(results)
+#
+# # Sort by Test R² (highest first)
+# results_df = results_df.sort_values(by="Test R²", ascending=False)
+#
+# print(results_df)
