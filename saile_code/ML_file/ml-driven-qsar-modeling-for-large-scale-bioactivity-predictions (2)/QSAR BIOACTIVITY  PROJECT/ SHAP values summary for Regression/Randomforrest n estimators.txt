@@ -1,0 +1,2 @@
+Randomforrest:{'n_estimators': 500, 'min_samples_split': 5, 'min_samples_leaf': 2, 'max_features': 0.5, 'max_depth': None, 'bootstrap': True}
+0.6708911818559703
