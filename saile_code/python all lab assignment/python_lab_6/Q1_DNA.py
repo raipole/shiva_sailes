@@ -1,0 +1,7 @@
+def rna()
+	DNA="ATGCGTACGTTAGCCTAGGCTAATCGGATCGTACGATCGTACGATCGTAGCTAGC"
+	RNA=dn.replace('T','U')
+	print(RNA)
+rna()
+	
+	
